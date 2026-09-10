@@ -6,6 +6,9 @@ class Main{
         int choice;
 
         HashMap<String , BankAccount> map = new HashMap<>();
+        ValidationUtil validation = new ValidationUtil();
+        BankService service = new BankService(validation,sc,map);
+
         do{
             System.out.println("-------Welcome to Our Bank-------");
             System.out.println("Enter Choice ! What help you need..");
@@ -18,10 +21,6 @@ class Main{
             System.out.println("7. Exit");
             choice = sc.nextInt();
             
-            BankAccount acc ;
-            ValidationUtil validation = new ValidationUtil();
-            BankService service = new BankService(validation,sc,map);
-
             switch(choice){
                 case 1: 
                     service.CreateAccount();
@@ -39,7 +38,7 @@ class Main{
                     service.printDetails();
                     break;
                 case 6 : 
-                    service.checkInterset();
+                    service.applyInterset();
                     break;
                 case 7 : 
                     break;
@@ -67,8 +66,9 @@ class ValidationUtil{
                     "Enter 12 digit account number");
 
             String accNo = sc.next();
+            String regex = "\\d{12}";
 
-            if (accNo.length() == 12)
+            if (accNo.matches(regex))
                 return accNo;
 
             System.out.println(
@@ -111,7 +111,7 @@ class BankService{
 
     public void CreateAccount(){
         System.out.println("Enter your username");
-        String name = sc.nextLine();
+        String name = sc.next();
         
         String accNo = validation.accountValidation(sc);
 
@@ -122,13 +122,13 @@ class BankService{
         
         System.out.println("Enter your Account Type (saving/current)");
         String accType = sc.next();
-        validation.accTypeValidation(accType, sc);
+        accType = validation.accTypeValidation(accType, sc);
 
         System.out.println("Enter your Initial Balance");
         double balance = sc.nextDouble();
         
         while((balance)<=0){ 
-            System.out.println("Enter valid account Type");
+            System.out.println("Enter valid balance");
             balance = sc.nextDouble();
         }
         
@@ -180,7 +180,7 @@ class BankService{
         acc.printInfo();
     }
 
-    public void checkInterset(){
+    public void applyInterset(){
         BankAccount acc = validation.getAccount(sc, map);
         if (acc == null) return;
 
@@ -235,7 +235,7 @@ class Saving extends BankAccount{
     }
 
     public void withraw(double amount){
-        if(amount >= 0 && super.getBalance() >= amount) {
+        if(amount > 0 && super.getBalance() >= amount) {
             super.setBalance(super.getBalance() - amount); 
             System.out.println("Your Total Balance is : " + super.getBalance());
         }
@@ -245,7 +245,8 @@ class Saving extends BankAccount{
     }
 
     public double calculateInterset(){
-        super.setBalance(super.getBalance()* intrestRate / 100);
+        double interest = super.getBalance() * intrestRate / 100;
+        super.setBalance(super.getBalance() + interest);
         return super.getBalance() ;
     }
 
@@ -265,6 +266,10 @@ class Current extends BankAccount{
         this.overdraftLimit= overdraftLimit;
     }
     public void withraw(double amount){
+        if(amount <= 0){
+            System.out.println("Invalid Amount");
+            return;
+        }
          if(super.getBalance()+ overdraftLimit >= amount) {
             super.setBalance(super.getBalance() - amount); ;
             System.out.println("Your Total Balance is : " + super.getBalance());
